@@ -6,6 +6,7 @@
 #include<ncurses.h>
 #include<unistd.h>
 
+// Struct for representing the world
 typedef struct {
         int x;
         int y;
@@ -18,7 +19,7 @@ world* create_world(int x, int y)
         world* w = malloc(sizeof(world));
         w->x = x;
         w->y = y;
-        w->matrix = calloc(x*y, sizeof(char));
+        w->matrix = calloc(x*y, sizeof(char)); // Use calloc for initialized values
         return w;
 }
 
@@ -51,7 +52,7 @@ void randomize_world(world* w)
         srand(time(NULL));
         for(int y = 0; y < w->y; y++){
                 for(int x = 0; x < w->x; x++){
-                        if(rand() < 0.7 * ((double)RAND_MAX + 1.0)){
+                        if(rand() < 0.7 * ((double)RAND_MAX + 1.0)){ // 70% of cells dead at start
                                 w->matrix[y*w->x + x] = 0;
                         } else {
                                 w->matrix[y*w->x + x] = 1;
@@ -60,6 +61,7 @@ void randomize_world(world* w)
         }
 }
 
+// Return number of neighbours of cell in x,y
 int num_neighbours(int x, int y, world *w)
 {
         int count = 0;
@@ -70,7 +72,7 @@ int num_neighbours(int x, int y, world *w)
                                 continue;
                         }
                         u = (w->x + x + i) % w->x; // Use a cyclic world
-                        v = (w->y + y + j) % w->y;
+                        v = (w->y + y + j) % w->y; // Add w->x and w->y to avoid negative numbers
                         count += w->matrix[v*w->x + u];
                 }
         }
@@ -83,11 +85,11 @@ char update_cell(int x, int y, world *w)
         int num;
         num = num_neighbours(x, y, w);
         if(w->matrix[y*w->x + x]){ // Cell is alive
-                if(num < 2 || num > 3){
+                if(num < 2 || num > 3){ // If less than 2 or more than 3 neighbours, cell dies
                         return 0;
                 } 
         } else { // Cell is dead
-                if(num == 3){
+                if(num == 3){ // If exactly 3 neighbours, cell turns alive
                         return 1;
                 }
         }
@@ -97,17 +99,22 @@ char update_cell(int x, int y, world *w)
 // Update the world one step
 void update_world(world *w)
 {
-        // Create temporary matrix to store the old data
+        // Size in bytes of the array that stores the world
         int size = w->x*w->y*sizeof(char);
-        char* old = malloc(size);
-        memcpy(old, w->matrix, size);
+
+        // Create temporary matrix to write the new world in
+        char* new = malloc(size);
+        memcpy(new, w->matrix, size);
         for(int y = 0; y < w->y; y++){
                 for(int x = 0; x < w->x; x++){
-                       old[y*w->x + x] = update_cell(x, y, w); 
+                       new[y*w->x + x] = update_cell(x, y, w); 
                 }
         }
-        memcpy(w->matrix, old, size);
-        free(old);
+        // free the old world
+        free(w->matrix);
+
+        // Use the new world
+        w->matrix = new;
 }
 
 // Print to stdsrc (curses)

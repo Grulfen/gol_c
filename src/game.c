@@ -118,39 +118,35 @@ void update_world(world *w)
 }
 
 // Print to stdsrc (curses)
-void print_curses(world *w)
+void print_curses(world *w, int color)
 {
         char c;
+
+        // Print border
         attron(COLOR_PAIR(1));
         mvaddch(0, 0, '\\');
-        for(int i=1; i<w->x; i++)
+        mvaddch(w->y + 1, w->x + 1, '\\');
+        mvaddch(0, w->x + 1, '/');
+        mvaddch(w->y + 1, 0, '/');
+        for(int i=1; i<w->x + 1; i++){
                 mvaddch(0, i, '=');
+                mvaddch(w->y + 1, i, '=');
+        }
+        for(int j=1; j<w->y + 1; j++){
+                mvaddch(j, 0, '|');
+                mvaddch(j, w->x + 1, '|');
+        }
         attroff(COLOR_PAIR(1));
+
+        // Print world
+        attron(COLOR_PAIR(color));
         for(int y = 0; y < w->y; y++){
-                attron(COLOR_PAIR(1));
-                mvaddch(y + 1, 0, '|');
-                attroff(COLOR_PAIR(1));
-                attron(COLOR_PAIR(2));
                 for(int x = 0; x < w->x; x++){
                        c = w->matrix[y*w->x + x] ? '#' : ' ';
                        mvaddch(y + 1, x + 1, c);
                 }
-                if(y == 0){
-                        attron(COLOR_PAIR(1));
-                        mvaddch(0, w->x + 1, '/');
-                        attroff(COLOR_PAIR(1));
-                }
-                attron(COLOR_PAIR(1));
-                mvaddch(y + 1, w->x + 1, '|');
-                attroff(COLOR_PAIR(1));
         }
-        attroff(COLOR_PAIR(2));
-        attron(COLOR_PAIR(1));
-        mvaddch(w->y + 1, 0, '/');
-        for(int i=1; i<w->x; i++)
-                mvaddch(w->y + 1, i, '=');
-        mvaddch(w->y + 1, w->x + 1, '\\');
-        attroff(COLOR_PAIR(1));
+        attroff(COLOR_PAIR(color));
         refresh();
 }
 
@@ -158,17 +154,21 @@ void print_curses(world *w)
 void init_curses()
 {
         initscr();
+        keypad(stdscr, true);
         noecho();
         raw();
         nodelay(stdscr, true);
         start_color();
         init_pair(1, COLOR_WHITE, COLOR_BLACK);
         init_pair(2, COLOR_GREEN, COLOR_BLACK);
+        init_pair(3, COLOR_BLUE, COLOR_BLACK);
 }
 
 int main(int argc, char* argv[])
 {
+        int color = 2;
         int x, y;
+        long wait_inc = 10000000L;
         if(argc != 3){
                 x = 167;
                 y = 42;
@@ -185,12 +185,22 @@ int main(int argc, char* argv[])
         randomize_world(w);
         init_curses();
 
-        char c = 'n';
+        int c = 'n';
         while (c != 'q'){
-                if(c == 'r'){
-                        randomize_world(w);
+                switch (c) {
+                        case 'r' : randomize_world(w);
+                                   break;
+                        case 'b' : color = 3;
+                                   break;
+                        case 'g' : color = 2;
+                                   break;
+                        case KEY_UP: tim.tv_nsec = wait_inc;
+                                     tim.tv_nsec = tim.tv_nsec < 0 ? 0 : tim.tv_nsec;
+                                     break;
+                        case KEY_DOWN: tim.tv_nsec += wait_inc;
+                                       break;
                 }
-                print_curses(w);
+                print_curses(w, color);
                 update_world(w);
 
                 c = getch();

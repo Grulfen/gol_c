@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -W -pedantic -std=c99 -g
+CFLAGS = -Wall -Wextra -W -pedantic -std=c99 -g -D_POSIX_C_SOURCE=199309L
 BIN = bin
 SRC = src
 LDFLAGS = -lncurses
@@ -18,4 +18,4 @@ game:   $(OBJ)
 	$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
 
 clean:
-	rm $(exe) $(BIN)/*.o &>/dev/null
+	rm $(EXE) $(BIN)/*.o &>/dev/null

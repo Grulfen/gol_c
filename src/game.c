@@ -1,5 +1,6 @@
 #include<stdio.h>
 #include<stdlib.h>
+#include<sys/time.h>
 #include<time.h>
 #include<string.h>
 #include<ncurses.h>
@@ -113,24 +114,36 @@ void update_world(world *w)
 void print_curses(world *w)
 {
         char c;
+        attron(COLOR_PAIR(1));
         mvaddch(0, 0, '\\');
         for(int i=1; i<w->x; i++)
                 mvaddch(0, i, '=');
+        attroff(COLOR_PAIR(1));
         for(int y = 0; y < w->y; y++){
+                attron(COLOR_PAIR(1));
                 mvaddch(y + 1, 0, '|');
+                attroff(COLOR_PAIR(1));
+                attron(COLOR_PAIR(2));
                 for(int x = 0; x < w->x; x++){
                        c = w->matrix[y*w->x + x] ? '#' : ' ';
                        mvaddch(y + 1, x + 1, c);
                 }
                 if(y == 0){
+                        attron(COLOR_PAIR(1));
                         mvaddch(0, w->x + 1, '/');
+                        attroff(COLOR_PAIR(1));
                 }
+                attron(COLOR_PAIR(1));
                 mvaddch(y + 1, w->x + 1, '|');
+                attroff(COLOR_PAIR(1));
         }
+        attroff(COLOR_PAIR(2));
+        attron(COLOR_PAIR(1));
         mvaddch(w->y + 1, 0, '/');
         for(int i=1; i<w->x; i++)
                 mvaddch(w->y + 1, i, '=');
         mvaddch(w->y + 1, w->x + 1, '\\');
+        attroff(COLOR_PAIR(1));
         refresh();
 }
 
@@ -138,20 +151,33 @@ void print_curses(world *w)
 void init_curses()
 {
         initscr();
+        noecho();
+        raw();
+        nodelay(stdscr, true);
+        start_color();
+        init_pair(1, COLOR_WHITE, COLOR_BLACK);
+        init_pair(2, COLOR_GREEN, COLOR_BLACK);
 }
 
 int main(int argc, char* argv[])
 {
+        int x, y;
         if(argc != 3){
-                printf("Usage: ./game x y\n");
-                return 1;
+                x = 167;
+                y = 42;
+        } else {
+                x = atoi(argv[1]);
+                y = atoi(argv[2]);
         }
-        int x = atoi(argv[1]);
-        int y = atoi(argv[2]);
+
+        struct timespec tim;
+        tim.tv_sec = 0;
+        tim.tv_nsec = 100000000L;
+
         world* w = create_world(x, y);
         randomize_world(w);
-
         init_curses();
+
         char c = 'n';
         while (c != 'q'){
                 if(c == 'r'){
@@ -161,6 +187,7 @@ int main(int argc, char* argv[])
                 update_world(w);
 
                 c = getch();
+                nanosleep(&tim, NULL);
         }
         endwin();
         update_world(w);

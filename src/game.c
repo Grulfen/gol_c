@@ -194,11 +194,20 @@ int main(int argc, char* argv[])
                                    break;
                         case 'g' : color = 2;
                                    break;
-                        case KEY_UP: tim.tv_nsec = wait_inc;
-                                     tim.tv_nsec = tim.tv_nsec < 0 ? 0 : tim.tv_nsec;
-                                     break;
-                        case KEY_DOWN: tim.tv_nsec += wait_inc;
-                                       break;
+                        case KEY_UP: 
+                                   if(tim.tv_nsec < 2000000){
+                                           tim.tv_nsec = 2000000;
+                                   } else {
+                                           tim.tv_nsec -= wait_inc;
+                                   }
+                                   break;
+                        case KEY_DOWN:
+                                   if(tim.tv_nsec > 400000000){
+                                           tim.tv_nsec = 400000000;
+                                   } else {
+                                           tim.tv_nsec += wait_inc;
+                                   }
+                                   break;
                 }
                 print_curses(w, color);
                 update_world(w);

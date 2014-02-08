@@ -18,4 +18,4 @@ game:   $(OBJ)
 	$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
 
 clean:
-	rm $(EXE) $(BIN)/*.o &>/dev/null
+	rm -f $(EXE) $(BIN)/*.o

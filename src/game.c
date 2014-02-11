@@ -3,7 +3,7 @@
 #include<sys/time.h>
 #include<time.h>
 #include<string.h>
-#include<ncurses.h>
+#include<curses.h>
 #include<unistd.h>
 
 // Struct for representing the world
@@ -164,26 +164,21 @@ void init_curses()
         init_pair(3, COLOR_BLUE, COLOR_BLACK);
 }
 
-int main(int argc, char* argv[])
+int main()
 {
         int color = 2;
-        int x, y;
+        int row, col;
         long wait_inc = 10000000L;
-        if(argc != 3){
-                x = 167;
-                y = 42;
-        } else {
-                x = atoi(argv[1]);
-                y = atoi(argv[2]);
-        }
 
         struct timespec tim;
         tim.tv_sec = 0;
-        tim.tv_nsec = 100000000L;
+        tim.tv_nsec = 10*wait_inc;
 
-        world* w = create_world(x, y);
-        randomize_world(w);
         init_curses();
+        getmaxyx(stdscr, row, col);
+
+        world* w = create_world(col - 2, row - 2);
+        randomize_world(w);
 
         int c = 'n';
         while (c != 'q'){
@@ -215,6 +210,7 @@ int main(int argc, char* argv[])
                 c = getch();
                 nanosleep(&tim, NULL);
         }
+
         endwin();
         update_world(w);
 

@@ -156,7 +156,7 @@ void init_curses()
         initscr();
         keypad(stdscr, true);
         noecho();
-        raw();
+        cbreak();
         nodelay(stdscr, true);
         start_color();
         init_pair(1, COLOR_WHITE, COLOR_BLACK);
@@ -185,30 +185,31 @@ int main()
                 switch (c) {
                         case 'r' : randomize_world(w);
                                    break;
-                        case 'b' : color = 3;
+                        case 'b' : color = 3; // Change color to blue
                                    break;
-                        case 'g' : color = 2;
+                        case 'g' : color = 2; // Change color to green
                                    break;
-                        case KEY_UP: 
-                                   if(tim.tv_nsec < 2000000){
+                        case KEY_UP:  // Make game run faster
+                                   if(tim.tv_nsec < 2000000){ // Avoid timer to wrap around
                                            tim.tv_nsec = 2000000;
                                    } else {
                                            tim.tv_nsec -= wait_inc;
                                    }
                                    break;
-                        case KEY_DOWN:
-                                   if(tim.tv_nsec > 400000000){
+                        case KEY_DOWN: // Make game run slower
+                                   if(tim.tv_nsec > 400000000){ // Avoid timer to wrap around
                                            tim.tv_nsec = 400000000;
                                    } else {
                                            tim.tv_nsec += wait_inc;
                                    }
                                    break;
                 }
-                print_curses(w, color);
-                update_world(w);
-
-                c = getch();
+                print_curses(w, color); // Print world to screen
+                update_world(w); // Update the world
                 nanosleep(&tim, NULL);
+
+                c = getch(); // Check if user input is available - non-blocking call
+                flushinp(); // Flush the input queue to avoid lag (input in the input queue is discarded)
         }
 
         endwin();

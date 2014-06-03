@@ -220,8 +220,6 @@ int main(int argc, char** argv)
         int c = 'n';
         while (c != 'q'){
 
-                c = getch(); // Check if user input is available - non-blocking call
-                flushinp(); // Flush the input queue to avoid lag (input in the input queue is discarded)
 
                 switch (c) {
                         case 'r' : randomize_world(w);
@@ -259,6 +257,9 @@ int main(int argc, char** argv)
                 print_curses(w, color); // Print world to screen
                 update_world(w); // Update the world
                 nanosleep(&tim, NULL);
+
+                c = getch(); // Check if user input is available - non-blocking call
+                flushinp(); // Flush the input queue to avoid lag (input in the input queue is discarded)
 
         }
 

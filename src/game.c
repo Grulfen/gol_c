@@ -161,10 +161,23 @@ void init_curses()
         cbreak();
         nodelay(stdscr, true);
         start_color();
-        init_pair(1, COLOR_BLACK, COLOR_BLUE);
+        init_pair(1, COLOR_WHITE, COLOR_BLACK);
         init_pair(2, COLOR_GREEN, COLOR_BLACK);
         init_pair(3, COLOR_BLUE, COLOR_BLACK);
         init_pair(4, COLOR_YELLOW, COLOR_BLACK);
+}
+
+void run_test()
+{
+        double start_time = omp_get_wtime();
+        world *w = create_world(200, 200);
+        randomize_world(w);
+        for(int i=0;i<300;i++){
+                update_world(w); // Update the world
+        }
+        double end_time = omp_get_wtime();
+        printf("Time: %.2f\n", end_time - start_time);
+        destroy_world(w);
 }
 
 int main(int argc, char** argv)
@@ -196,66 +209,60 @@ int main(int argc, char** argv)
 
         world *w;
         if(test){ // Run test without curses
-                double start_time = omp_get_wtime();
-                w = create_world(200, 200);
-                randomize_world(w);
-                for(int i=0;i<300;i++){
-                        update_world(w); // Update the world
+                run_test();
+                exit(0);
+        } 
+        init_curses();
+        getmaxyx(stdscr, row, col);
+        w = create_world(col - 2, row - 2);
+        randomize_world(w);
+
+        int c = 'n';
+        while (c != 'q'){
+
+                c = getch(); // Check if user input is available - non-blocking call
+                flushinp(); // Flush the input queue to avoid lag (input in the input queue is discarded)
+
+                switch (c) {
+                        case 'r' : randomize_world(w);
+                                   break;
+                        case 'g' : color = 2; // Change color to green
+                                   break;
+                        case 'b' : color = 3; // Change color to blue
+                                   break;
+                        case 'y' : color = 4; // Change color to green
+                                   break;
+                        case KEY_UP:  // Make game run faster
+                                   if(tim.tv_nsec < 30000000L){ // Avoid timer to wrap around
+                                           tim.tv_nsec = 30000000L;
+                                   } else {
+                                           tim.tv_nsec -= wait_inc;
+                                   }
+                                   break;
+                        case KEY_DOWN: // Make game run slower
+                                   if(tim.tv_nsec > 400000000){ // Avoid timer to wrap around
+                                           tim.tv_nsec = 400000000;
+                                   } else {
+                                           tim.tv_nsec += wait_inc;
+                                   }
+                                   break;
+                        case KEY_RESIZE:
+                                   // Terminal size changed
+                                   // reallocate world to new size
+                                   // New world is a little skewed :(
+                                   getmaxyx(stdscr, row, col);
+                                   w->x = col-2;
+                                   w->y = row-2;
+                                   w->matrix = realloc(w->matrix, w->x*w->y*sizeof(char));
+                                   break;
                 }
-                double end_time = omp_get_wtime();
-                printf("Time: %.2f\n", end_time - start_time);
-        } else {
-                init_curses();
-                getmaxyx(stdscr, row, col);
-                w = create_world(col - 2, row - 2);
-                randomize_world(w);
+                print_curses(w, color); // Print world to screen
+                update_world(w); // Update the world
+                nanosleep(&tim, NULL);
 
-                int c = 'n';
-                while (c != 'q'){
-                        c = getch(); // Check if user input is available - non-blocking call
-                        flushinp(); // Flush the input queue to avoid lag (input in the input queue is discarded)
-                        switch (c) {
-                                case 'r' : randomize_world(w);
-                                           break;
-                                case 'b' : color = 3; // Change color to blue
-                                           break;
-                                case 'g' : color = 2; // Change color to green
-                                           break;
-                                case 'y' : color = 4; // Change color to green
-                                           break;
-                                case KEY_UP:  // Make game run faster
-                                           if(tim.tv_nsec < 2000000){ // Avoid timer to wrap around
-                                                   tim.tv_nsec = 2000000;
-                                           } else {
-                                                   tim.tv_nsec -= wait_inc;
-                                           }
-                                           break;
-                                case KEY_DOWN: // Make game run slower
-                                           if(tim.tv_nsec > 400000000){ // Avoid timer to wrap around
-                                                   tim.tv_nsec = 400000000;
-                                           } else {
-                                                   tim.tv_nsec += wait_inc;
-                                           }
-                                           break;
-                                case KEY_RESIZE:
-                                           /* destroy_world(w); */
-                                           getmaxyx(stdscr, row, col);
-                                           w->x = col-2;
-                                           w->y = row-2;
-                                           w->matrix = realloc(w->matrix, w->x*w->y*sizeof(char));
-                                           /* w = create_world(col - 2, row - 2); */
-                                           /* randomize_world(w); */
-                                           break;
-                        }
-                        print_curses(w, color); // Print world to screen
-                        update_world(w); // Update the world
-                        nanosleep(&tim, NULL);
-
-                }
-
-                endwin();
-                update_world(w);
         }
+
+        endwin();
 
         destroy_world(w);
         return 0;

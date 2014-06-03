@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -W -pedantic -std=c99 -g -D_POSIX_C_SOURCE=199309L
+CFLAGS = -Wall -Wextra -W -pedantic -std=c99 -g -D_POSIX_C_SOURCE=199309L -fopenmp
 BIN = bin
 SRC = src
 LDFLAGS = -lncurses

@@ -1,8 +1,15 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -W -pedantic -std=c99 -g -D_POSIX_C_SOURCE=199309L -fopenmp
+CFLAGS = -Wall -Wextra -W -pedantic -std=c99 -D_POSIX_C_SOURCE=199309L -fopenmp
+
+ifeq ($(mode),release)
+	CFLAGS += -O2
+else
+	CFLAGS += -g
+endif
+
 BIN = bin
 SRC = src
-LDFLAGS = -lncurses
+LDFLAGS = -lncurses -fopenmp
 
 
 OBJ = $(BIN)/game.o
@@ -12,10 +19,10 @@ EXE = game
 all:$(EXE) 
 
 $(BIN)/%.o : $(SRC)/%.c
-	$(CC) -c $(CFLAGS) $? $(LDFLAGS) -o $@
+	$(CC) -c $(CFLAGS) $? -o $@
 
 game:   $(OBJ)
-	$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
+	$(CC) $^ $(LDFLAGS) -o $@
 
 clean:
 	rm -f $(EXE) $(BIN)/*.o
